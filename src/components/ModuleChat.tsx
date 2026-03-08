@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Send, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
@@ -22,11 +21,23 @@ export default function ModuleChat({ moduleId, moduleTitle, userId }: Props) {
   const [loading, setLoading] = useState(false);
   const [convId, setConvId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize textarea
+  const adjustTextarea = useCallback(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = "auto";
+    ta.style.height = `${Math.min(ta.scrollHeight, 150)}px`;
+  }, []);
+
+  useEffect(() => {
+    adjustTextarea();
+  }, [input, adjustTextarea]);
 
   // Load or create conversation
   useEffect(() => {
     const init = async () => {
-      // Try to find existing conversation
       let { data: conv } = await supabase
         .from("conversations")
         .select("id")
@@ -45,7 +56,6 @@ export default function ModuleChat({ moduleId, moduleTitle, userId }: Props) {
 
       if (conv) {
         setConvId(conv.id);
-        // Load messages
         const { data: msgs } = await supabase
           .from("messages")
           .select("role, content")
@@ -68,14 +78,12 @@ export default function ModuleChat({ moduleId, moduleTitle, userId }: Props) {
     setInput("");
     setLoading(true);
 
-    // Save user message
     await supabase.from("messages").insert({
       conversation_id: convId,
       role: "user",
       content: userMsg.content,
     });
 
-    // Call AI
     try {
       const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/study-chat`;
       const resp = await fetch(CHAT_URL, {
@@ -91,9 +99,7 @@ export default function ModuleChat({ moduleId, moduleTitle, userId }: Props) {
         }),
       });
 
-      if (!resp.ok || !resp.body) {
-        throw new Error("Failed to get AI response");
-      }
+      if (!resp.ok || !resp.body) throw new Error("Failed to get AI response");
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
@@ -136,7 +142,6 @@ export default function ModuleChat({ moduleId, moduleTitle, userId }: Props) {
         }
       }
 
-      // Save assistant message
       if (assistantSoFar) {
         await supabase.from("messages").insert({
           conversation_id: convId,
@@ -153,6 +158,13 @@ export default function ModuleChat({ moduleId, moduleTitle, userId }: Props) {
     }
 
     setLoading(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
   };
 
   return (
@@ -195,16 +207,20 @@ export default function ModuleChat({ moduleId, moduleTitle, userId }: Props) {
 
       <form
         onSubmit={(e) => { e.preventDefault(); sendMessage(); }}
-        className="flex gap-2 border-t border-border bg-card px-4 py-3"
+        className="flex items-end gap-2 border-t border-border bg-card px-4 py-3"
       >
-        <Input
+        <textarea
+          ref={textareaRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
           placeholder="Ask a question..."
           disabled={loading}
-          className="flex-1"
+          rows={1}
+          className="flex-1 resize-none rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 disabled:opacity-50"
+          style={{ minHeight: "40px", maxHeight: "150px" }}
         />
-        <Button type="submit" size="icon" disabled={loading || !input.trim()}>
+        <Button type="submit" size="icon" disabled={loading || !input.trim()} className="shrink-0">
           <Send className="h-4 w-4" />
         </Button>
       </form>

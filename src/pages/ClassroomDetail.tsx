@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ArrowLeft, Copy, Users, FileText, ClipboardList, Plus, Send, Trash2, User } from "lucide-react";
 import { toast } from "sonner";
 import EmojiReaction from "@/components/EmojiReaction";
+import { useClassroomNotifications } from "@/hooks/useClassroomNotifications";
 
 interface Member {
   user_id: string;
@@ -39,6 +40,7 @@ export default function ClassroomDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  useClassroomNotifications(id);
   const [classroom, setClassroom] = useState<any>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
