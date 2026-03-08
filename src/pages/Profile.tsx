@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { LogOut, User, Save } from "lucide-react";
+import { LogOut, User, Save, Moon, Sun } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Profile() {
   const { user, signOut, isAdmin } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [fullName, setFullName] = useState("");
   const [bio, setBio] = useState("");
   const [saving, setSaving] = useState(false);
@@ -42,17 +44,17 @@ export default function Profile() {
   };
 
   return (
-    <div className="px-4 py-6">
+    <div className="mx-auto max-w-lg px-4 py-6">
       <h1 className="mb-1 font-display text-2xl font-bold text-foreground">Profile</h1>
       <p className="mb-6 text-sm text-muted-foreground">Manage your account</p>
 
-      <div className="mb-6 flex items-center gap-4 rounded-xl border border-border bg-card p-4 shadow-card">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-secondary">
+      <div className="mb-4 flex items-center gap-4 rounded-xl border border-border bg-card p-4 shadow-card">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-secondary">
           <User className="h-6 w-6 text-secondary-foreground" />
         </div>
-        <div>
-          <p className="font-medium text-foreground">{fullName || "Student"}</p>
-          <p className="text-xs text-muted-foreground">{user?.email}</p>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-medium text-foreground">{fullName || "Student"}</p>
+          <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
           {isAdmin && (
             <span className="mt-1 inline-block rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
               Admin
@@ -61,16 +63,31 @@ export default function Profile() {
         </div>
       </div>
 
+      {/* Theme Toggle */}
+      <div className="mb-4 flex items-center justify-between rounded-xl border border-border bg-card p-4 shadow-card">
+        <div className="flex items-center gap-3">
+          {theme === "dark" ? <Moon className="h-5 w-5 text-muted-foreground" /> : <Sun className="h-5 w-5 text-muted-foreground" />}
+          <div>
+            <p className="text-sm font-medium text-foreground">Appearance</p>
+            <p className="text-xs text-muted-foreground">{theme === "dark" ? "Dark mode" : "Light mode"}</p>
+          </div>
+        </div>
+        <Button variant="outline" size="sm" onClick={toggleTheme} className="gap-1.5">
+          {theme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+          {theme === "dark" ? "Light" : "Dark"}
+        </Button>
+      </div>
+
       <div className="space-y-4 rounded-xl border border-border bg-card p-4 shadow-card">
         <div className="space-y-2">
           <Label>Full Name</Label>
-          <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
+          <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your full name" />
         </div>
         <div className="space-y-2">
           <Label>Bio</Label>
           <Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} placeholder="Tell us about yourself..." />
         </div>
-        <Button onClick={save} disabled={saving} className="gap-2">
+        <Button onClick={save} disabled={saving} className="w-full gap-2 sm:w-auto">
           <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Profile"}
         </Button>
       </div>
