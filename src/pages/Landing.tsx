@@ -23,8 +23,8 @@ export default function Landing() {
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 pt-4 sm:px-6">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <Sparkles className="h-4 w-4 text-primary-foreground" />
+          <div className="h-8 w-8 overflow-hidden rounded-lg">
+            <img src={appLogo} alt="Alikalie Study Companion" className="h-full w-full object-cover" />
           </div>
           <span className="font-display text-sm font-bold text-foreground">Alikalie Study Companion</span>
         </div>
