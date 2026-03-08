@@ -17,6 +17,7 @@ import Profile from "@/pages/Profile";
 import Admin from "@/pages/Admin";
 import Classrooms from "@/pages/Classrooms";
 import ClassroomDetail from "@/pages/ClassroomDetail";
+import About from "@/pages/About";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -63,6 +64,7 @@ const App = () => (
                 <Route path="/classrooms/:id" element={<ClassroomDetail />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+                <Route path="/about" element={<About />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

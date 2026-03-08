@@ -25,7 +25,7 @@ export default function Landing() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <Sparkles className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="font-display text-sm font-bold text-foreground">Study Companion</span>
+          <span className="font-display text-sm font-bold text-foreground">Alikalie Study Companion</span>
         </div>
         <button
           onClick={toggleTheme}
@@ -210,7 +210,7 @@ export default function Landing() {
       </section>
 
       <footer className="border-t border-border px-4 py-5 text-center text-xs text-muted-foreground sm:py-6">
-        © {new Date().getFullYear()} Alikalie Fofanah Study Companion. All rights reserved.
+        © {new Date().getFullYear()} Alikalie Study Companion. All rights reserved.
       </footer>
     </div>
   );
