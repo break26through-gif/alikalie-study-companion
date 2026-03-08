@@ -1,1 +1,7 @@
 project_id = "sctmkkatcjvhsmavndjo"
+
+[functions.study-chat]
+verify_jwt = false
+
+[functions.parse-document]
+verify_jwt = false
