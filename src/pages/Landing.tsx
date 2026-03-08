@@ -25,7 +25,7 @@ export default function Landing() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <Sparkles className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="font-display text-sm font-bold text-foreground">Study Companion</span>
+          <span className="font-display text-sm font-bold text-foreground">Alikalie Study Companion</span>
         </div>
         <button
           onClick={toggleTheme}
