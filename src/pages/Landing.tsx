@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { BookOpen, MessageCircle, Brain, ArrowRight, Moon, Sun, Sparkles, School, Zap, Globe, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
+import appLogo from "@/assets/app-logo.jpg";
 
 const floatingIcons = [
   { icon: "📚", x: "10%", y: "20%", delay: 0, duration: 6 },
@@ -22,8 +23,8 @@ export default function Landing() {
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 pt-4 sm:px-6">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <Sparkles className="h-4 w-4 text-primary-foreground" />
+          <div className="h-8 w-8 overflow-hidden rounded-lg">
+            <img src={appLogo} alt="Alikalie Study Companion" className="h-full w-full object-cover" />
           </div>
           <span className="font-display text-sm font-bold text-foreground">Alikalie Study Companion</span>
         </div>
