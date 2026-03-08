@@ -46,7 +46,7 @@ export default function Modules() {
     filtered.filter((m) => m.category_id === catId);
 
   return (
-    <div className="px-4 py-6">
+    <div className="mx-auto max-w-lg px-4 py-6">
       <h1 className="mb-1 font-display text-2xl font-bold text-foreground">Modules</h1>
       <p className="mb-4 text-sm text-muted-foreground">Browse your study courses</p>
 

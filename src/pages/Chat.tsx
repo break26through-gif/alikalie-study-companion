@@ -29,7 +29,7 @@ export default function Chat() {
   }, [user]);
 
   return (
-    <div className="px-4 py-6">
+    <div className="mx-auto max-w-lg px-4 py-6">
       <h1 className="mb-1 font-display text-2xl font-bold text-foreground">Chats</h1>
       <p className="mb-6 text-sm text-muted-foreground">Your AI study conversations</p>
 
