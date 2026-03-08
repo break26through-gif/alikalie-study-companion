@@ -40,6 +40,7 @@ export default function ClassroomDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
+  useClassroomNotifications(id);
   const [classroom, setClassroom] = useState<any>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
