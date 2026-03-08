@@ -210,7 +210,7 @@ export default function Landing() {
       </section>
 
       <footer className="border-t border-border px-4 py-5 text-center text-xs text-muted-foreground sm:py-6">
-        © {new Date().getFullYear()} Alikalie Fofanah Study Companion. All rights reserved.
+        © {new Date().getFullYear()} Alikalie Study Companion. All rights reserved.
       </footer>
     </div>
   );
