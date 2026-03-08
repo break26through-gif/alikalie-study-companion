@@ -1,8 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BookOpen, MessageCircle, Brain, ArrowRight, Moon, Sun, GraduationCap, Sparkles } from "lucide-react";
+import { BookOpen, MessageCircle, Brain, ArrowRight, Moon, Sun, Sparkles, School } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
+import appLogo from "@/assets/app-logo.png";
 import heroTutor from "@/assets/hero-tutor.png";
 
 export default function Landing() {
@@ -14,7 +15,7 @@ export default function Landing() {
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 pt-4 sm:px-6">
         <div className="flex items-center gap-2">
-          <GraduationCap className="h-5 w-5 text-primary" />
+          <img src={appLogo} alt="Study Companion" className="h-8 w-8" />
           <span className="font-display text-sm font-bold text-foreground">Study Companion</span>
         </div>
         <button
@@ -34,18 +35,13 @@ export default function Landing() {
           transition={{ duration: 0.6 }}
           className="mx-auto max-w-lg text-center"
         >
-          {/* Hero Image */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7, delay: 0.1 }}
             className="mx-auto mb-5 w-48 sm:w-56"
           >
-            <img
-              src={heroTutor}
-              alt="AI Study Companion - Student learning with books"
-              className="w-full drop-shadow-lg"
-            />
+            <img src={heroTutor} alt="AI Study Companion" className="w-full drop-shadow-lg" />
           </motion.div>
 
           <motion.div
@@ -73,10 +69,10 @@ export default function Landing() {
             transition={{ duration: 0.5, delay: 0.5 }}
             className="flex flex-col gap-3 sm:flex-row sm:justify-center"
           >
-            <Button size="lg" onClick={() => navigate("/login")} className="w-full gap-2 sm:w-auto">
+            <Button size="lg" onClick={() => navigate("/login")} className="w-full gap-2 sm:w-auto active:scale-95 transition-transform">
               Get Started <ArrowRight className="h-4 w-4" />
             </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate("/login?mode=signup")} className="w-full sm:w-auto">
+            <Button size="lg" variant="outline" onClick={() => navigate("/login?mode=signup")} className="w-full sm:w-auto active:scale-95 transition-transform">
               Create Account
             </Button>
           </motion.div>
@@ -115,17 +111,22 @@ export default function Landing() {
               {
                 icon: MessageCircle,
                 title: "AI-Powered Chat",
-                desc: "Chat with AI about any course. Each module has its own conversation that remembers where you left off.",
+                desc: "Chat with AI about any course. Each module has its own conversation.",
               },
               {
                 icon: BookOpen,
                 title: "Comprehensive Courses",
-                desc: "CS, ICT & B.Tech courses with detailed study notes you can read anytime, anywhere.",
+                desc: "CS, ICT & B.Tech courses with detailed study notes.",
+              },
+              {
+                icon: School,
+                title: "Classrooms",
+                desc: "Create or join classrooms, share notes, and submit assignments together.",
               },
               {
                 icon: Brain,
                 title: "African Context",
-                desc: "AI uses Sierra Leone & African case studies so learning feels relevant and practical.",
+                desc: "Sierra Leone & African case studies so learning feels relevant.",
               },
             ].map((f, i) => (
               <motion.div
@@ -166,7 +167,7 @@ export default function Landing() {
             size="lg"
             variant="secondary"
             onClick={() => navigate("/login?mode=signup")}
-            className="w-full gap-2 sm:w-auto"
+            className="w-full gap-2 sm:w-auto active:scale-95 transition-transform"
           >
             Sign Up Free <ArrowRight className="h-4 w-4" />
           </Button>

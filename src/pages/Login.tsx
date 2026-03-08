@@ -88,6 +88,17 @@ export default function Login() {
             </Button>
           </form>
 
+          {!isSignUp && (
+            <p className="text-center">
+              <button
+                onClick={() => navigate("/forgot-password")}
+                className="text-sm text-primary hover:underline"
+              >
+                Forgot your password?
+              </button>
+            </p>
+          )}
+
           <p className="text-center text-sm text-muted-foreground">
             {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
             <button
