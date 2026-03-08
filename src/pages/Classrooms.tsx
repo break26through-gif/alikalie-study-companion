@@ -7,8 +7,26 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Users, LogIn, Clock, CheckCircle } from "lucide-react";
+import { Plus, Users, LogIn, Clock, CheckCircle, Copy } from "lucide-react";
 import { toast } from "sonner";
+
+// Deterministic brand colors for classrooms
+const BRAND_COLORS = [
+  { bg: "from-blue-500/20 to-blue-600/10", accent: "bg-blue-500", text: "text-blue-600 dark:text-blue-400", ring: "ring-blue-500/30" },
+  { bg: "from-emerald-500/20 to-emerald-600/10", accent: "bg-emerald-500", text: "text-emerald-600 dark:text-emerald-400", ring: "ring-emerald-500/30" },
+  { bg: "from-violet-500/20 to-violet-600/10", accent: "bg-violet-500", text: "text-violet-600 dark:text-violet-400", ring: "ring-violet-500/30" },
+  { bg: "from-amber-500/20 to-amber-600/10", accent: "bg-amber-500", text: "text-amber-600 dark:text-amber-400", ring: "ring-amber-500/30" },
+  { bg: "from-rose-500/20 to-rose-600/10", accent: "bg-rose-500", text: "text-rose-600 dark:text-rose-400", ring: "ring-rose-500/30" },
+  { bg: "from-cyan-500/20 to-cyan-600/10", accent: "bg-cyan-500", text: "text-cyan-600 dark:text-cyan-400", ring: "ring-cyan-500/30" },
+  { bg: "from-orange-500/20 to-orange-600/10", accent: "bg-orange-500", text: "text-orange-600 dark:text-orange-400", ring: "ring-orange-500/30" },
+  { bg: "from-pink-500/20 to-pink-600/10", accent: "bg-pink-500", text: "text-pink-600 dark:text-pink-400", ring: "ring-pink-500/30" },
+];
+
+function getColorForId(id: string) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
+  return BRAND_COLORS[Math.abs(hash) % BRAND_COLORS.length];
+}
 
 interface Classroom {
   id: string;
@@ -36,7 +54,6 @@ export default function Classrooms() {
 
   const fetchClassrooms = async () => {
     if (!user) return;
-    // Get classrooms where user is a member
     const { data: memberOf } = await supabase
       .from("classroom_members")
       .select("classroom_id")
@@ -57,7 +74,6 @@ export default function Classrooms() {
       .order("created_at", { ascending: false });
 
     if (data) {
-      // Get member counts
       const withCounts = await Promise.all(
         data.map(async (c: any) => {
           const { count } = await supabase
@@ -93,7 +109,6 @@ export default function Classrooms() {
       return;
     }
 
-    // Add creator as owner
     await supabase.from("classroom_members").insert({
       classroom_id: data.id,
       user_id: user.id,
@@ -147,6 +162,12 @@ export default function Classrooms() {
     setJoinOpen(false);
     setSubmitting(false);
     fetchClassrooms();
+  };
+
+  const copyCode = (code: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(code);
+    toast.success("Code copied!");
   };
 
   return (
@@ -218,33 +239,46 @@ export default function Classrooms() {
         </div>
       ) : (
         <div className="space-y-3">
-          {classrooms.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => navigate(`/classrooms/${c.id}`)}
-              className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-card transition-all hover:shadow-elevated active:scale-[0.98]"
-            >
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary text-lg font-bold text-secondary-foreground">
-                {c.name.charAt(0).toUpperCase()}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="truncate font-display font-semibold text-foreground">{c.name}</p>
-                  {c.approved ? (
-                    <CheckCircle className="h-3.5 w-3.5 shrink-0 text-green-500" />
-                  ) : (
-                    <Clock className="h-3.5 w-3.5 shrink-0 text-yellow-500" />
-                  )}
+          {classrooms.map((c) => {
+            const color = getColorForId(c.id);
+            return (
+              <button
+                key={c.id}
+                onClick={() => navigate(`/classrooms/${c.id}`)}
+                className={`flex w-full items-center gap-3 rounded-xl border border-border bg-gradient-to-br ${color.bg} p-4 text-left shadow-card transition-all hover:shadow-elevated active:scale-[0.98] ring-1 ${color.ring}`}
+              >
+                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${color.accent} text-lg font-bold text-white`}>
+                  {c.name.charAt(0).toUpperCase()}
                 </div>
-                {c.description && (
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">{c.description}</p>
-                )}
-                <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                  <Users className="h-3 w-3" /> {c.member_count} members
-                </p>
-              </div>
-            </button>
-          ))}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate font-display font-semibold text-foreground">{c.name}</p>
+                    {c.approved ? (
+                      <CheckCircle className="h-3.5 w-3.5 shrink-0 text-green-500" />
+                    ) : (
+                      <Clock className="h-3.5 w-3.5 shrink-0 text-yellow-500" />
+                    )}
+                  </div>
+                  {c.description && (
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">{c.description}</p>
+                  )}
+                  <div className="mt-1 flex items-center gap-3">
+                    <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Users className="h-3 w-3" /> {c.member_count} members
+                    </p>
+                    {c.approved && (
+                      <button
+                        onClick={(e) => copyCode(c.code, e)}
+                        className={`flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-mono font-medium ${color.text} bg-background/50 hover:bg-background/80 transition-colors`}
+                      >
+                        <Copy className="h-2.5 w-2.5" /> {c.code}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
