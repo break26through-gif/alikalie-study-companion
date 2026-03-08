@@ -8,11 +8,15 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import AppLayout from "@/components/AppLayout";
 import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
 import Modules from "@/pages/Modules";
 import ModuleDetail from "@/pages/ModuleDetail";
 import Chat from "@/pages/Chat";
 import Profile from "@/pages/Profile";
 import Admin from "@/pages/Admin";
+import Classrooms from "@/pages/Classrooms";
+import ClassroomDetail from "@/pages/ClassroomDetail";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,10 +53,14 @@ const App = () => (
             <Routes>
               <Route path="/" element={<PublicOnly><Landing /></PublicOnly>} />
               <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                 <Route path="/modules" element={<Modules />} />
                 <Route path="/modules/:id" element={<ModuleDetail />} />
                 <Route path="/chat" element={<Chat />} />
+                <Route path="/classrooms" element={<Classrooms />} />
+                <Route path="/classrooms/:id" element={<ClassroomDetail />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
               </Route>

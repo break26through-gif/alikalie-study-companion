@@ -1,4 +1,4 @@
-import { MessageCircle, BookOpen, User, Shield } from "lucide-react";
+import { MessageCircle, BookOpen, User, Shield, School } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { path: "/chat", label: "Chat", icon: MessageCircle },
   { path: "/modules", label: "Modules", icon: BookOpen },
+  { path: "/classrooms", label: "Classroom", icon: School },
   { path: "/profile", label: "Profile", icon: User },
 ];
 

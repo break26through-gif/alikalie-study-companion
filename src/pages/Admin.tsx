@@ -5,6 +5,7 @@ import AdminCategories from "@/components/admin/AdminCategories";
 import AdminModules from "@/components/admin/AdminModules";
 import AdminKnowledge from "@/components/admin/AdminKnowledge";
 import AdminUsers from "@/components/admin/AdminUsers";
+import AdminClassrooms from "@/components/admin/AdminClassrooms";
 
 export default function Admin() {
   return (
@@ -15,17 +16,19 @@ export default function Admin() {
       </div>
 
       <Tabs defaultValue="categories">
-        <TabsList className="mb-4 grid w-full grid-cols-4">
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="modules">Modules</TabsTrigger>
-          <TabsTrigger value="knowledge">Knowledge</TabsTrigger>
-          <TabsTrigger value="users">Users</TabsTrigger>
+        <TabsList className="mb-4 grid w-full grid-cols-5">
+          <TabsTrigger value="categories" className="text-xs">Categories</TabsTrigger>
+          <TabsTrigger value="modules" className="text-xs">Modules</TabsTrigger>
+          <TabsTrigger value="knowledge" className="text-xs">Knowledge</TabsTrigger>
+          <TabsTrigger value="users" className="text-xs">Users</TabsTrigger>
+          <TabsTrigger value="classrooms" className="text-xs">Classrooms</TabsTrigger>
         </TabsList>
 
         <TabsContent value="categories"><AdminCategories /></TabsContent>
         <TabsContent value="modules"><AdminModules /></TabsContent>
         <TabsContent value="knowledge"><AdminKnowledge /></TabsContent>
         <TabsContent value="users"><AdminUsers /></TabsContent>
+        <TabsContent value="classrooms"><AdminClassrooms /></TabsContent>
       </Tabs>
     </div>
   );
