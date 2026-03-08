@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { BookOpen, MessageCircle, Brain, ArrowRight, Moon, Sun, Sparkles, School, Zap, Globe, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
+import appLogo from "@/assets/app-logo.jpg";
 
 const floatingIcons = [
   { icon: "📚", x: "10%", y: "20%", delay: 0, duration: 6 },
