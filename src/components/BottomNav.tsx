@@ -7,6 +7,7 @@ const navItems = [
   { path: "/chat", label: "Chat", icon: MessageCircle },
   { path: "/modules", label: "Modules", icon: BookOpen },
   { path: "/classrooms", label: "Classroom", icon: School },
+  { path: "/about", label: "About", icon: Info },
   { path: "/profile", label: "Profile", icon: User },
 ];
 
