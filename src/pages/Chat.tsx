@@ -37,9 +37,10 @@ export default function Chat() {
       {conversations.length === 0 ? (
         <div className="flex flex-col items-center py-20 text-center">
           <MessageCircle className="mb-3 h-10 w-10 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
-            No conversations yet. Go to a module and start chatting!
-          </p>
+          <p className="text-sm text-muted-foreground">No conversations yet.</p>
+          <Button variant="outline" className="mt-4" onClick={() => navigate("/free-chat")}>
+            Start a Free Chat
+          </Button>
         </div>
       ) : (
         <div className="space-y-2">
