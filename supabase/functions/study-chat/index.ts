@@ -10,7 +10,11 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, moduleTitle, moduleId } = await req.json();
+    const body = await req.json();
+    const messages = body?.messages ?? [];
+    const moduleTitle = body?.moduleTitle ?? "Free Chat";
+    const moduleId: string | null = body?.moduleId ?? null;
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -19,12 +23,18 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get module notes
-    const { data: moduleData } = await supabase
-      .from("modules")
-      .select("notes_content")
-      .eq("id", moduleId)
-      .single();
+    const isFreeChat = !moduleId;
+
+    // Get module notes (optional)
+    let moduleNotes: string | null = null;
+    if (moduleId) {
+      const { data: moduleData } = await supabase
+        .from("modules")
+        .select("notes_content")
+        .eq("id", moduleId)
+        .maybeSingle();
+      moduleNotes = moduleData?.notes_content ?? null;
+    }
 
     // Get all knowledge docs
     const { data: knowledgeDocs } = await supabase
@@ -33,8 +43,8 @@ serve(async (req) => {
       .limit(20);
 
     let knowledgeContext = "";
-    if (moduleData?.notes_content) {
-      knowledgeContext += `\n\n## Module Notes for "${moduleTitle}":\n${moduleData.notes_content}`;
+    if (moduleNotes) {
+      knowledgeContext += `\n\n## Module Notes for "${moduleTitle}":\n${moduleNotes}`;
     }
     if (knowledgeDocs && knowledgeDocs.length > 0) {
       knowledgeContext += "\n\n## Additional Knowledge Base:\n";
@@ -43,7 +53,20 @@ serve(async (req) => {
       }
     }
 
-    const systemPrompt = `You are the Alikalie Fofanah Study Companion AI — a knowledgeable and friendly tutor specializing in Computer Science, ICT, and B.Tech courses.
+    const systemPrompt = isFreeChat
+      ? `You are the Alikalie Fofanah Study Companion AI — a knowledgeable and friendly tutor specializing in Computer Science, ICT, and B.Tech courses.
+
+IMPORTANT GUIDELINES:
+- This is a free-form learning chat (no specific module selected)
+- Use Sierra Leone and African contexts as case studies whenever possible
+- Reference real-world examples from African technology ecosystems
+- Be encouraging and supportive in your teaching style
+- Explain concepts clearly with practical examples
+- When relevant, reference local institutions, companies, and technologies in Sierra Leone and Africa
+- Use the provided knowledge base to give accurate, contextual answers
+
+${knowledgeContext}`
+      : `You are the Alikalie Fofanah Study Companion AI — a knowledgeable and friendly tutor specializing in Computer Science, ICT, and B.Tech courses.
 
 IMPORTANT GUIDELINES:
 - You are currently helping a student study the module: "${moduleTitle}"

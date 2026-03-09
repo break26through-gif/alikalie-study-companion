@@ -156,6 +156,11 @@ export default function ModuleChat({ moduleId, moduleTitle, userId }: Props) {
           role: "assistant",
           content: assistantSoFar,
         });
+
+        await supabase
+          .from("conversations")
+          .update({ updated_at: new Date().toISOString() })
+          .eq("id", convId);
       }
     } catch (err) {
       console.error(err);

@@ -61,6 +61,7 @@ const App = () => (
                 <Route path="/modules" element={<Modules />} />
                 <Route path="/modules/:id" element={<ModuleDetail />} />
                 <Route path="/chat" element={<Chat />} />
+                <Route path="/free-chat" element={<FreeChat />} />
                 <Route path="/classrooms" element={<Classrooms />} />
                 <Route path="/classrooms/:id" element={<ClassroomDetail />} />
                 <Route path="/profile" element={<Profile />} />

@@ -44,26 +44,29 @@ export default function Chat() {
         </div>
       ) : (
         <div className="space-y-2">
-          {conversations.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => navigate(`/modules/${c.module_id}`)}
-              className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-card transition-all hover:shadow-elevated"
-            >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary">
-                <MessageCircle className="h-5 w-5 text-secondary-foreground" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="font-medium text-foreground truncate">
-                  {c.modules?.title || "Unknown Module"}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Last active {new Date(c.updated_at).toLocaleDateString()}
-                </p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </button>
-          ))}
+          {conversations.map((c) => {
+            const title = c.modules?.title || (c.module_id ? "Unknown Module" : "Free Chat");
+            const to = c.module_id ? `/modules/${c.module_id}` : `/free-chat?c=${c.id}`;
+
+            return (
+              <button
+                key={c.id}
+                onClick={() => navigate(to)}
+                className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-card transition-all hover:shadow-elevated"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary">
+                  <MessageCircle className="h-5 w-5 text-secondary-foreground" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-foreground truncate">{title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Last active {new Date(c.updated_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
