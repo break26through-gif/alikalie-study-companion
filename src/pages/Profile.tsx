@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { LogOut, User, Save, Moon, Sun, Camera, Loader2 } from "lucide-react";
+import { LogOut, User, Save, Moon, Sun, Camera, Loader2, Info, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Profile() {
   const { user, signOut, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const [fullName, setFullName] = useState("");
   const [bio, setBio] = useState("");
@@ -145,6 +147,22 @@ export default function Profile() {
           {theme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
           {theme === "dark" ? "Light" : "Dark"}
         </Button>
+      </div>
+
+      <div className="mb-4 grid gap-2 sm:grid-cols-2">
+        <Button variant="outline" onClick={() => navigate("/free-chat")} className="w-full justify-start gap-2">
+          <MessageCircle className="h-4 w-4" /> Free Chat
+        </Button>
+        <Button variant="outline" onClick={() => navigate("/about")} className="w-full justify-start gap-2">
+          <Info className="h-4 w-4" /> About
+        </Button>
+      </div>
+
+      <div className="mb-4 rounded-xl border border-border bg-card p-4 shadow-card">
+        <h2 className="font-display text-sm font-semibold text-foreground">About Study Companion</h2>
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+          Learn with AI using practical Sierra Leone & African examples; your Free Chat and module chats are saved to your account.
+        </p>
       </div>
 
       <div className="space-y-4 rounded-xl border border-border bg-card p-4 shadow-card">

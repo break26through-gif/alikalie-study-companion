@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 import { MessageCircle, ChevronRight } from "lucide-react";
 
 interface ConvWithModule {
   id: string;
-  module_id: string;
+  module_id: string | null;
   updated_at: string;
   modules: { title: string } | null;
 }
@@ -36,32 +37,36 @@ export default function Chat() {
       {conversations.length === 0 ? (
         <div className="flex flex-col items-center py-20 text-center">
           <MessageCircle className="mb-3 h-10 w-10 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
-            No conversations yet. Go to a module and start chatting!
-          </p>
+          <p className="text-sm text-muted-foreground">No conversations yet.</p>
+          <Button variant="outline" className="mt-4" onClick={() => navigate("/free-chat")}>
+            Start a Free Chat
+          </Button>
         </div>
       ) : (
         <div className="space-y-2">
-          {conversations.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => navigate(`/modules/${c.module_id}`)}
-              className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-card transition-all hover:shadow-elevated"
-            >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary">
-                <MessageCircle className="h-5 w-5 text-secondary-foreground" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="font-medium text-foreground truncate">
-                  {c.modules?.title || "Unknown Module"}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Last active {new Date(c.updated_at).toLocaleDateString()}
-                </p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </button>
-          ))}
+          {conversations.map((c) => {
+            const title = c.modules?.title || (c.module_id ? "Unknown Module" : "Free Chat");
+            const to = c.module_id ? `/modules/${c.module_id}` : `/free-chat?c=${c.id}`;
+
+            return (
+              <button
+                key={c.id}
+                onClick={() => navigate(to)}
+                className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-card transition-all hover:shadow-elevated"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary">
+                  <MessageCircle className="h-5 w-5 text-secondary-foreground" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-foreground truncate">{title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Last active {new Date(c.updated_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

@@ -13,6 +13,7 @@ import ResetPassword from "@/pages/ResetPassword";
 import Modules from "@/pages/Modules";
 import ModuleDetail from "@/pages/ModuleDetail";
 import Chat from "@/pages/Chat";
+import FreeChat from "@/pages/FreeChat";
 import Profile from "@/pages/Profile";
 import Admin from "@/pages/Admin";
 import Classrooms from "@/pages/Classrooms";
@@ -60,6 +61,7 @@ const App = () => (
                 <Route path="/modules" element={<Modules />} />
                 <Route path="/modules/:id" element={<ModuleDetail />} />
                 <Route path="/chat" element={<Chat />} />
+                <Route path="/free-chat" element={<FreeChat />} />
                 <Route path="/classrooms" element={<Classrooms />} />
                 <Route path="/classrooms/:id" element={<ClassroomDetail />} />
                 <Route path="/profile" element={<Profile />} />
