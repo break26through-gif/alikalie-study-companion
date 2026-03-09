@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { BookOpen, ChevronRight, Search } from "lucide-react";
+import { BookOpen, ChevronRight, Search, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 
@@ -47,8 +47,19 @@ export default function Modules() {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-6">
-      <h1 className="mb-1 font-display text-2xl font-bold text-foreground">Modules</h1>
-      <p className="mb-4 text-sm text-muted-foreground">Browse your study courses</p>
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">Modules</h1>
+          <p className="text-sm text-muted-foreground">Browse your study courses</p>
+        </div>
+        <button
+          onClick={() => navigate("/free-chat")}
+          className="flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 text-xs font-medium text-primary-foreground shadow-sm transition-all hover:opacity-90 active:scale-95"
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          Free Chat
+        </button>
+      </div>
 
       <div className="relative mb-6">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

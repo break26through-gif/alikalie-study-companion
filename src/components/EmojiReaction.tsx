@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 const EMOJIS = ["👍", "❤️", "🔥", "👏", "😂"];
 
 interface Props {
-  targetType: "note" | "assignment" | "submission";
+  targetType: "note" | "assignment" | "submission" | "announcement" | "quiz";
   targetId: string;
 }
 
