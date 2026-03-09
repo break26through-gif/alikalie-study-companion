@@ -12,6 +12,7 @@ import { toast } from "sonner";
 
 export default function Profile() {
   const { user, signOut, isAdmin } = useAuth();
+  const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const [fullName, setFullName] = useState("");
   const [bio, setBio] = useState("");
