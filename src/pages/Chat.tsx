@@ -7,7 +7,7 @@ import { MessageCircle, ChevronRight } from "lucide-react";
 
 interface ConvWithModule {
   id: string;
-  module_id: string;
+  module_id: string | null;
   updated_at: string;
   modules: { title: string } | null;
 }
