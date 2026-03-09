@@ -59,6 +59,7 @@ interface QuizQuestion {
 
 interface QuizResponse {
   id: string;
+  quiz_id: string;
   question_id: string;
   user_id: string;
   answer: string;
