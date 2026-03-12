@@ -34,6 +34,32 @@ export function useClassroomNotifications(classroomId: string | undefined) {
           toast.info(`📋 New assignment: ${assignment.title}`, { duration: 5000 });
         }
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "announcements",
+          filter: `classroom_id=eq.${classroomId}`,
+        },
+        (payload) => {
+          const announcement = payload.new as { title: string };
+          toast.info(`📢 New announcement: ${announcement.title}`, { duration: 5000 });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "quizzes",
+          filter: `classroom_id=eq.${classroomId}`,
+        },
+        (payload) => {
+          const quiz = payload.new as { title: string };
+          toast.info(`🧠 New quiz: ${quiz.title}`, { duration: 5000 });
+        }
+      )
       .subscribe();
 
     return () => {
