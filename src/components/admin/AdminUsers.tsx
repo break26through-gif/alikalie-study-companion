@@ -133,7 +133,7 @@ export default function AdminUsers() {
                     <Shield className="h-4 w-4 text-muted-foreground" />
                     <Select
                       value={r.role}
-                      onValueChange={(v) => changeRole(selectedUser.user_id, r.id, v)}
+                      onValueChange={(v) => changeRole(selectedUser.user_id, r.id, v as "admin" | "user")}
                     >
                       <SelectTrigger className="w-32">
                         <SelectValue />
