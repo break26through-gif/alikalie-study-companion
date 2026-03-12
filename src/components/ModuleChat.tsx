@@ -1,12 +1,51 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, Copy, Check } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { toast } from "sonner";
 
 interface Msg {
   role: "user" | "assistant";
   content: string;
+}
+
+function MessageBubble({ msg }: { msg: Msg }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(msg.content);
+    setCopied(true);
+    toast.success("Copied!");
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <div className={`group flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+      <div className="relative max-w-[85%]">
+        <div
+          className={`rounded-2xl px-4 py-2.5 text-sm ${
+            msg.role === "user"
+              ? "bg-primary text-primary-foreground rounded-br-md"
+              : "bg-secondary text-secondary-foreground rounded-bl-md"
+          }`}
+        >
+          {msg.role === "assistant" ? (
+            <div className="prose prose-sm max-w-none prose-p:my-1 prose-headings:my-2">
+              <ReactMarkdown>{msg.content}</ReactMarkdown>
+            </div>
+          ) : (
+            msg.content
+          )}
+        </div>
+        <button
+          onClick={handleCopy}
+          className="absolute -bottom-5 right-1 flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground"
+        >
+          {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 interface Props {
@@ -191,23 +230,7 @@ export default function ModuleChat({ moduleId, moduleTitle, userId }: Props) {
           </div>
         )}
         {messages.map((msg, i) => (
-          <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div
-              className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
-                msg.role === "user"
-                  ? "bg-primary text-primary-foreground rounded-br-md"
-                  : "bg-secondary text-secondary-foreground rounded-bl-md"
-              }`}
-            >
-              {msg.role === "assistant" ? (
-                <div className="prose prose-sm max-w-none prose-p:my-1 prose-headings:my-2">
-                  <ReactMarkdown>{msg.content}</ReactMarkdown>
-                </div>
-              ) : (
-                msg.content
-              )}
-            </div>
-          </div>
+          <MessageBubble key={i} msg={msg} />
         ))}
         {loading && messages[messages.length - 1]?.role === "user" && (
           <div className="flex justify-start">
