@@ -31,7 +31,7 @@ export default function AdminUsers() {
 
   useEffect(() => { load(); }, []);
 
-  const changeRole = async (userId: string, currentRoleId: string, newRole: string) => {
+  const changeRole = async (userId: string, currentRoleId: string, newRole: "admin" | "user") => {
     const { error } = await supabase
       .from("user_roles")
       .update({ role: newRole })
