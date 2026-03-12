@@ -35,7 +35,7 @@ export default function ModuleDetail() {
     <div className="flex flex-col" style={{ height: "calc(100vh - var(--bottom-nav-height))" }}>
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-border bg-card px-3 py-3 sm:px-4">
-        <button onClick={() => navigate("/modules")} className="shrink-0 rounded-full p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground">
+        <button onClick={() => navigate(-1)} className="shrink-0 rounded-full p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground">
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="min-w-0 flex-1">
