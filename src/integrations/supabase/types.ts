@@ -53,8 +53,12 @@ export type Database = {
         Row: {
           assignment_id: string
           content: string
+          feedback: string | null
           file_name: string | null
           file_url: string | null
+          grade: string | null
+          graded_at: string | null
+          graded_by: string | null
           id: string
           submitted_at: string
           user_id: string
@@ -62,8 +66,12 @@ export type Database = {
         Insert: {
           assignment_id: string
           content?: string
+          feedback?: string | null
           file_name?: string | null
           file_url?: string | null
+          grade?: string | null
+          graded_at?: string | null
+          graded_by?: string | null
           id?: string
           submitted_at?: string
           user_id: string
@@ -71,8 +79,12 @@ export type Database = {
         Update: {
           assignment_id?: string
           content?: string
+          feedback?: string | null
           file_name?: string | null
           file_url?: string | null
+          grade?: string | null
+          graded_at?: string | null
+          graded_by?: string | null
           id?: string
           submitted_at?: string
           user_id?: string
