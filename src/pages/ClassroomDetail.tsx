@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   ArrowLeft, Copy, Users, FileText, ClipboardList, Plus, Send, Trash2, User,
-  Megaphone, HelpCircle, Upload, Download, CheckCircle, XCircle, Eye, Paperclip
+  Megaphone, HelpCircle, Upload, Download, CheckCircle, XCircle, Eye, Paperclip, Star, MessageSquare
 } from "lucide-react";
 import { toast } from "sonner";
 import EmojiReaction from "@/components/EmojiReaction";
@@ -31,13 +31,25 @@ interface Note {
   author_id: string;
 }
 
+interface Submission {
+  id: string;
+  user_id: string;
+  content: string;
+  file_url: string | null;
+  file_name: string | null;
+  submitted_at: string;
+  grade?: string | null;
+  feedback?: string | null;
+  graded_at?: string | null;
+}
+
 interface Assignment {
   id: string;
   title: string;
   description: string | null;
   due_date: string | null;
   created_at: string;
-  submissions?: { id: string; user_id: string; content: string; file_url: string | null; file_name: string | null; submitted_at: string }[];
+  submissions?: Submission[];
 }
 
 interface Quiz {
@@ -127,6 +139,11 @@ export default function ClassroomDetail() {
   const [viewingQuizResponses, setViewingQuizResponses] = useState<string | null>(null);
   const [submissionProfiles, setSubmissionProfiles] = useState<Record<string, string>>({});
 
+  // Grading
+  const [gradingSubmission, setGradingSubmission] = useState<string | null>(null);
+  const [gradeValue, setGradeValue] = useState("");
+  const [feedbackValue, setFeedbackValue] = useState("");
+
   const fetchAll = async () => {
     if (!id || !user) return;
 
@@ -158,7 +175,7 @@ export default function ClassroomDetail() {
       const withSubs = await Promise.all(
         assignRes.data.map(async (a: any) => {
           const { data: subs } = await supabase.from("assignment_submissions").select("*").eq("assignment_id", a.id);
-          return { ...a, submissions: subs || [] };
+          return { ...a, submissions: (subs || []) as Submission[] };
         })
       );
       setAssignments(withSubs);
@@ -173,7 +190,6 @@ export default function ClassroomDetail() {
       );
       setQuizzes(withQ);
 
-      // Load my responses
       const quizIds = (quizRes.data as Quiz[]).map((q) => q.id);
       if (quizIds.length > 0) {
         const { data: responses } = await supabase
@@ -255,6 +271,28 @@ export default function ClassroomDetail() {
     setUploadingAssignment(null);
   };
 
+  // --- Grading ---
+  const gradeSubmission = async (submissionId: string) => {
+    if (!user || !gradeValue.trim()) return;
+    const { error } = await supabase
+      .from("assignment_submissions")
+      .update({
+        grade: gradeValue.trim(),
+        feedback: feedbackValue.trim() || null,
+        graded_at: new Date().toISOString(),
+        graded_by: user.id,
+      })
+      .eq("id", submissionId);
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Graded!");
+      setGradingSubmission(null);
+      setGradeValue("");
+      setFeedbackValue("");
+      fetchAll();
+    }
+  };
+
   // --- Quizzes ---
   const addQuizQuestion = () => {
     setQuizQuestions([...quizQuestions, { question_text: "", question_type: "multiple_choice", options: ["", "", "", ""], correct_answer: "" }]);
@@ -334,7 +372,7 @@ export default function ClassroomDetail() {
     <div className="mx-auto max-w-lg px-4 py-4">
       {/* Header */}
       <div className="mb-4 flex items-center gap-3">
-        <button onClick={() => navigate("/classrooms")} className="rounded-full p-2 text-muted-foreground hover:bg-secondary">
+        <button onClick={() => navigate(-1)} className="rounded-full p-2 text-muted-foreground hover:bg-secondary">
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="min-w-0 flex-1">
@@ -430,7 +468,7 @@ export default function ClassroomDetail() {
           )}
         </TabsContent>
 
-        {/* ASSIGNMENTS with file upload */}
+        {/* ASSIGNMENTS with file upload + grading */}
         <TabsContent value="assignments" className="space-y-3">
           {isOwner && (
             <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
@@ -457,7 +495,7 @@ export default function ClassroomDetail() {
                   {a.description && <p className="mt-1 text-sm text-muted-foreground">{a.description}</p>}
                   {a.due_date && <p className="mt-1 text-xs text-muted-foreground">📅 Due: {new Date(a.due_date).toLocaleString()}</p>}
 
-                  {/* Owner: view submissions */}
+                  {/* Owner: view submissions + grade */}
                   {isOwner && (
                     <div className="mt-3">
                       <button
@@ -473,7 +511,14 @@ export default function ClassroomDetail() {
                         <div className="mt-2 space-y-2">
                           {a.submissions.map((sub) => (
                             <div key={sub.id} className="rounded-lg border border-border bg-secondary/30 p-3">
-                              <p className="text-xs font-medium text-foreground">{submissionProfiles[sub.user_id] || "Loading..."}</p>
+                              <div className="flex items-center justify-between">
+                                <p className="text-xs font-medium text-foreground">{submissionProfiles[sub.user_id] || "Loading..."}</p>
+                                {sub.grade && (
+                                  <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                                    <Star className="h-3 w-3" /> {sub.grade}
+                                  </span>
+                                )}
+                              </div>
                               {sub.file_url ? (
                                 <div className="mt-1 flex items-center gap-2">
                                   <Paperclip className="h-3 w-3 text-muted-foreground" />
@@ -485,7 +530,50 @@ export default function ClassroomDetail() {
                               ) : (
                                 <p className="mt-1 text-xs text-muted-foreground">{sub.content}</p>
                               )}
-                              <p className="mt-1 text-[10px] text-muted-foreground">{new Date(sub.submitted_at).toLocaleString()}</p>
+                              {sub.feedback && (
+                                <div className="mt-2 rounded-md bg-primary/5 p-2">
+                                  <p className="text-[10px] font-medium text-primary">Feedback:</p>
+                                  <p className="text-xs text-muted-foreground">{sub.feedback}</p>
+                                </div>
+                              )}
+                              <div className="mt-2 flex items-center justify-between">
+                                <p className="text-[10px] text-muted-foreground">{new Date(sub.submitted_at).toLocaleString()}</p>
+                                {gradingSubmission === sub.id ? (
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      className="h-7 w-16 text-xs"
+                                      placeholder="Grade"
+                                      value={gradeValue}
+                                      onChange={(e) => setGradeValue(e.target.value)}
+                                    />
+                                    <Input
+                                      className="h-7 w-32 text-xs"
+                                      placeholder="Feedback (opt)"
+                                      value={feedbackValue}
+                                      onChange={(e) => setFeedbackValue(e.target.value)}
+                                    />
+                                    <Button size="sm" className="h-7 text-xs" onClick={() => gradeSubmission(sub.id)}>
+                                      <CheckCircle className="h-3 w-3" />
+                                    </Button>
+                                    <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setGradingSubmission(null)}>
+                                      <XCircle className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 gap-1 text-xs"
+                                    onClick={() => {
+                                      setGradingSubmission(sub.id);
+                                      setGradeValue(sub.grade || "");
+                                      setFeedbackValue(sub.feedback || "");
+                                    }}
+                                  >
+                                    <Star className="h-3 w-3" /> {sub.grade ? "Re-grade" : "Grade"}
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           ))}
                           {a.submissions.length === 0 && <p className="text-xs text-muted-foreground">No submissions yet.</p>}
@@ -518,8 +606,24 @@ export default function ClassroomDetail() {
                       </Button>
                     </div>
                   )}
+
+                  {/* Member: view own submission + grade */}
                   {mySubmission && (
-                    <p className="mt-2 text-xs text-green-600 dark:text-green-400">✅ Submitted: {mySubmission.file_name || mySubmission.content}</p>
+                    <div className="mt-2 space-y-1">
+                      <p className="text-xs text-green-600 dark:text-green-400">✅ Submitted: {mySubmission.file_name || mySubmission.content}</p>
+                      {mySubmission.grade && (
+                        <div className="rounded-md bg-primary/5 p-2">
+                          <p className="flex items-center gap-1 text-xs font-semibold text-primary">
+                            <Star className="h-3 w-3" /> Grade: {mySubmission.grade}
+                          </p>
+                          {mySubmission.feedback && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              <MessageSquare className="mr-1 inline h-3 w-3" />{mySubmission.feedback}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   <div className="mt-3 flex items-center justify-between">
@@ -599,7 +703,6 @@ export default function ClassroomDetail() {
                     onClick={async () => {
                       setViewingQuizResponses(viewingQuizResponses === quiz.id ? null : quiz.id);
                       if (viewingQuizResponses !== quiz.id) {
-                        // Load all responses for this quiz
                         const { data: allResp } = await supabase.from("quiz_responses").select("*").eq("quiz_id", quiz.id);
                         if (allResp) {
                           setMyQuizResponses((prev) => [...prev.filter(r => r.quiz_id !== quiz.id), ...(allResp as any)]);
