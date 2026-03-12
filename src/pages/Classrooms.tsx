@@ -54,14 +54,27 @@ export default function Classrooms() {
 
   const fetchClassrooms = async () => {
     if (!user) return;
+    
+    // Fetch classrooms user is a member of
     const { data: memberOf } = await supabase
       .from("classroom_members")
       .select("classroom_id")
       .eq("user_id", user.id);
 
-    const classroomIds = memberOf?.map((m: any) => m.classroom_id) || [];
+    const memberClassroomIds = memberOf?.map((m: any) => m.classroom_id) || [];
 
-    if (classroomIds.length === 0) {
+    // Also fetch classrooms created by user (they may not have member entry yet or may be pending)
+    const { data: createdByUser } = await supabase
+      .from("classrooms")
+      .select("id")
+      .eq("created_by", user.id);
+
+    const createdIds = createdByUser?.map((c: any) => c.id) || [];
+
+    // Merge unique IDs
+    const allIds = [...new Set([...memberClassroomIds, ...createdIds])];
+
+    if (allIds.length === 0) {
       setClassrooms([]);
       setLoading(false);
       return;
@@ -70,7 +83,7 @@ export default function Classrooms() {
     const { data } = await supabase
       .from("classrooms")
       .select("*")
-      .in("id", classroomIds)
+      .in("id", allIds)
       .order("created_at", { ascending: false });
 
     if (data) {
