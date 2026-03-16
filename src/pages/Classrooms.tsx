@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -52,88 +52,94 @@ export default function Classrooms() {
   const [joinCode, setJoinCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const fetchClassrooms = async () => {
-    if (!user) return;
-    
-    // Fetch classrooms user is a member of
-    const { data: memberOf } = await supabase
-      .from("classroom_members")
-      .select("classroom_id")
-      .eq("user_id", user.id);
-
-    const memberClassroomIds = memberOf?.map((m: any) => m.classroom_id) || [];
-
-    // Also fetch classrooms created by user (they may not have member entry yet or may be pending)
-    const { data: createdByUser } = await supabase
-      .from("classrooms")
-      .select("id")
-      .eq("created_by", user.id);
-
-    const createdIds = createdByUser?.map((c: any) => c.id) || [];
-
-    // Merge unique IDs
-    const allIds = [...new Set([...memberClassroomIds, ...createdIds])];
-
-    if (allIds.length === 0) {
+  const fetchClassrooms = useCallback(async () => {
+    if (!user) {
       setClassrooms([]);
       setLoading(false);
       return;
     }
 
-    const { data } = await supabase
-      .from("classrooms")
-      .select("*")
-      .in("id", allIds)
-      .order("created_at", { ascending: false });
+    setLoading(true);
+    try {
+      const [memberOfRes, createdByUserRes] = await Promise.all([
+        supabase.from("classroom_members").select("classroom_id").eq("user_id", user.id),
+        supabase.from("classrooms").select("id").eq("created_by", user.id),
+      ]);
 
-    if (data) {
-      const withCounts = await Promise.all(
-        data.map(async (c: any) => {
-          const { count } = await supabase
-            .from("classroom_members")
-            .select("*", { count: "exact", head: true })
-            .eq("classroom_id", c.id);
-          return { ...c, member_count: count || 0 };
-        })
-      );
-      setClassrooms(withCounts);
+      const memberClassroomIds = (memberOfRes.data || []).map((m: any) => m.classroom_id);
+      const createdIds = (createdByUserRes.data || []).map((c: any) => c.id);
+      const allIds = [...new Set([...memberClassroomIds, ...createdIds])];
+
+      if (allIds.length === 0) {
+        setClassrooms([]);
+        return;
+      }
+
+      const [classroomsRes, memberCountsRes] = await Promise.all([
+        supabase.from("classrooms").select("*").in("id", allIds).order("created_at", { ascending: false }),
+        supabase.from("classroom_members").select("classroom_id").in("classroom_id", allIds),
+      ]);
+
+      if (classroomsRes.error) throw classroomsRes.error;
+      if (memberCountsRes.error) throw memberCountsRes.error;
+
+      const countMap = (memberCountsRes.data || []).reduce<Record<string, number>>((acc, row: any) => {
+        acc[row.classroom_id] = (acc[row.classroom_id] || 0) + 1;
+        return acc;
+      }, {});
+
+      const hydrated = (classroomsRes.data || []).map((c: any) => ({
+        ...c,
+        member_count: countMap[c.id] || 0,
+      }));
+
+      setClassrooms(hydrated);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to load classrooms");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  };
+  }, [user]);
 
   useEffect(() => {
-    fetchClassrooms();
-  }, [user]);
+    void fetchClassrooms();
+  }, [fetchClassrooms]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !name.trim()) return;
     setSubmitting(true);
 
-    const { data, error } = await supabase
-      .from("classrooms")
-      .insert({ name: name.trim(), description: description.trim() || null, created_by: user.id })
-      .select()
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from("classrooms")
+        .insert({ name: name.trim(), description: description.trim() || null, created_by: user.id })
+        .select()
+        .single();
 
-    if (error) {
-      toast.error(error.message);
+      if (error) throw error;
+
+      const { error: membershipError } = await supabase.from("classroom_members").upsert(
+        {
+          classroom_id: data.id,
+          user_id: user.id,
+          role: "owner",
+        },
+        { onConflict: "classroom_id,user_id" }
+      );
+
+      if (membershipError) throw membershipError;
+
+      toast.success("Classroom created! Waiting for admin approval.");
+      setName("");
+      setDescription("");
+      setCreateOpen(false);
+      await fetchClassrooms();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create classroom");
+    } finally {
       setSubmitting(false);
-      return;
     }
-
-    await supabase.from("classroom_members").insert({
-      classroom_id: data.id,
-      user_id: user.id,
-      role: "owner",
-    });
-
-    toast.success("Classroom created! Waiting for admin approval.");
-    setName("");
-    setDescription("");
-    setCreateOpen(false);
-    setSubmitting(false);
-    fetchClassrooms();
   };
 
   const handleJoin = async (e: React.FormEvent) => {
@@ -141,40 +147,54 @@ export default function Classrooms() {
     if (!user || !joinCode.trim()) return;
     setSubmitting(true);
 
-    const { data: classroom } = await supabase
-      .from("classrooms")
-      .select("id, approved")
-      .eq("code", joinCode.trim().toLowerCase())
-      .single();
+    try {
+      const normalizedCode = joinCode.trim().toLowerCase();
+      const { data: classroom, error: classroomError } = await supabase
+        .from("classrooms")
+        .select("id, approved")
+        .eq("code", normalizedCode)
+        .maybeSingle();
 
-    if (!classroom) {
-      toast.error("Classroom not found. Check the code.");
+      if (classroomError) throw classroomError;
+
+      if (!classroom) {
+        toast.error("Classroom not found. Check the code.");
+        return;
+      }
+
+      if (!classroom.approved) {
+        toast.error("This classroom is not yet approved by admin.");
+        return;
+      }
+
+      const { data: existingMembership } = await supabase
+        .from("classroom_members")
+        .select("id")
+        .eq("classroom_id", classroom.id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existingMembership) {
+        toast.info("You're already in this classroom.");
+      } else {
+        const { error } = await supabase.from("classroom_members").insert({
+          classroom_id: classroom.id,
+          user_id: user.id,
+          role: "member",
+        });
+
+        if (error) throw error;
+        toast.success("Joined classroom!");
+      }
+
+      setJoinCode("");
+      setJoinOpen(false);
+      await fetchClassrooms();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to join classroom");
+    } finally {
       setSubmitting(false);
-      return;
     }
-
-    if (!classroom.approved) {
-      toast.error("This classroom is not yet approved by admin.");
-      setSubmitting(false);
-      return;
-    }
-
-    const { error } = await supabase.from("classroom_members").insert({
-      classroom_id: classroom.id,
-      user_id: user.id,
-      role: "member",
-    });
-
-    if (error) {
-      if (error.code === "23505") toast.info("You're already in this classroom.");
-      else toast.error(error.message);
-    } else {
-      toast.success("Joined classroom!");
-    }
-    setJoinCode("");
-    setJoinOpen(false);
-    setSubmitting(false);
-    fetchClassrooms();
   };
 
   const copyCode = (code: string, e: React.MouseEvent) => {
