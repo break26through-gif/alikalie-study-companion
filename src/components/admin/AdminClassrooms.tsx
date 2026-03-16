@@ -50,9 +50,34 @@ export default function AdminClassrooms() {
   }, []);
 
   const approve = async (id: string) => {
-    const { error } = await supabase.from("classrooms").update({ approved: true }).eq("id", id);
-    if (error) toast.error(error.message);
-    else { toast.success("Classroom approved!"); fetch(); }
+    const { data: classroom, error: approveError } = await supabase
+      .from("classrooms")
+      .update({ approved: true })
+      .eq("id", id)
+      .select("id, created_by")
+      .single();
+
+    if (approveError || !classroom) {
+      toast.error(approveError?.message || "Failed to approve classroom");
+      return;
+    }
+
+    const { error: ownerError } = await supabase.from("classroom_members").upsert(
+      {
+        classroom_id: classroom.id,
+        user_id: classroom.created_by,
+        role: "owner",
+      },
+      { onConflict: "classroom_id,user_id" }
+    );
+
+    if (ownerError) {
+      toast.error(ownerError.message);
+      return;
+    }
+
+    toast.success("Classroom approved!");
+    fetch();
   };
 
   const reject = async (id: string) => {

@@ -30,26 +30,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsAdmin(!!data);
   };
 
+  const ensureProfile = async (currentUser: User) => {
+    const { data: existingProfile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("user_id", currentUser.id)
+      .maybeSingle();
+
+    if (existingProfile) return;
+
+    const fallbackName =
+      (typeof currentUser.user_metadata?.full_name === "string" && currentUser.user_metadata.full_name.trim()) ||
+      (currentUser.email ? currentUser.email.split("@")[0] : "User");
+
+    await supabase.from("profiles").insert({
+      user_id: currentUser.id,
+      full_name: fallbackName,
+    });
+  };
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await checkAdmin(session.user.id);
+      async (_event, nextSession) => {
+        setSession(nextSession);
+        setUser(nextSession?.user ?? null);
+
+        if (nextSession?.user) {
+          await Promise.all([
+            checkAdmin(nextSession.user.id),
+            ensureProfile(nextSession.user),
+          ]);
         } else {
           setIsAdmin(false);
         }
+
         setLoading(false);
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        checkAdmin(session.user.id);
+    supabase.auth.getSession().then(async ({ data: { session: initialSession } }) => {
+      setSession(initialSession);
+      setUser(initialSession?.user ?? null);
+
+      if (initialSession?.user) {
+        await Promise.all([
+          checkAdmin(initialSession.user.id),
+          ensureProfile(initialSession.user),
+        ]);
+      } else {
+        setIsAdmin(false);
       }
+
       setLoading(false);
     });
 

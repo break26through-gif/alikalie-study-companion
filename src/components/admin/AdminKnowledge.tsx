@@ -13,6 +13,8 @@ interface Doc {
   created_at: string;
 }
 
+const UPLOAD_CONCURRENCY = 3;
+
 export default function AdminKnowledge() {
   const { user } = useAuth();
   const [docs, setDocs] = useState<Doc[]>([]);
@@ -30,12 +32,15 @@ export default function AdminKnowledge() {
     const formData = new FormData();
     formData.append("file", file);
 
+    const { data: authData } = await supabase.auth.getSession();
+    const token = authData.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
     const resp = await fetch(
       `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-document`,
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       }
@@ -48,34 +53,49 @@ export default function AdminKnowledge() {
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0 || !user) return;
+
     setUploading(true);
 
-    const fileArray = Array.from(files);
+    const fileQueue = Array.from(files);
+    const total = fileQueue.length;
     let processed = 0;
+    let successCount = 0;
 
-    for (const file of fileArray) {
-      try {
-        setProgress(`Processing ${processed + 1}/${fileArray.length}: ${file.name}`);
-        const { content, title } = await processFile(file);
+    const worker = async () => {
+      while (fileQueue.length > 0) {
+        const file = fileQueue.shift();
+        if (!file) return;
 
-        const { error } = await supabase.from("knowledge_docs").insert({
-          title: title || file.name,
-          content,
-          file_type: file.type,
-          uploaded_by: user.id,
-        });
+        try {
+          setProgress(`Processing ${processed + 1}/${total}: ${file.name}`);
+          const { content, title } = await processFile(file);
 
-        if (error) throw error;
-        processed++;
-      } catch (err: any) {
-        toast.error(`Failed: ${file.name} - ${err.message}`);
+          const { error } = await supabase.from("knowledge_docs").insert({
+            title: title || file.name,
+            content,
+            file_type: file.type,
+            uploaded_by: user.id,
+          });
+
+          if (error) throw error;
+          successCount += 1;
+        } catch (err: any) {
+          toast.error(`Failed: ${file.name} - ${err.message}`);
+        } finally {
+          processed += 1;
+        }
       }
+    };
+
+    await Promise.all(
+      Array.from({ length: Math.min(UPLOAD_CONCURRENCY, total) }, () => worker())
+    );
+
+    if (successCount > 0) {
+      toast.success(`${successCount} document${successCount > 1 ? "s" : ""} uploaded!`);
+      await load();
     }
 
-    if (processed > 0) {
-      toast.success(`${processed} document${processed > 1 ? "s" : ""} uploaded!`);
-      load();
-    }
     setUploading(false);
     setProgress("");
     e.target.value = "";
