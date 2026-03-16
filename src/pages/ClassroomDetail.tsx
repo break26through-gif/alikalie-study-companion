@@ -268,7 +268,7 @@ export default function ClassroomDetail() {
     }
   }, [id, user]);
 
-  useEffect(() => { fetchAll(); }, [id, user]);
+  useEffect(() => { void fetchAll(); }, [fetchAll]);
 
   const copyCode = () => {
     if (classroom?.code) {
