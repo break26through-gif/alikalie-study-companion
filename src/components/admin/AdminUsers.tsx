@@ -67,7 +67,7 @@ export default function AdminUsers() {
         <div key={u.user_id} className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-card">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary">
             {u.avatar_url ? (
-              <img src={u.avatar_url} alt="" className="h-9 w-9 rounded-full object-cover" />
+              <img loading="lazy" src={u.avatar_url} alt="" className="h-9 w-9 rounded-full object-cover" />
             ) : (
               <User className="h-4 w-4 text-secondary-foreground" />
             )}
@@ -106,7 +106,7 @@ export default function AdminUsers() {
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary">
                   {selectedUser.avatar_url ? (
-                    <img src={selectedUser.avatar_url} alt="" className="h-12 w-12 rounded-full object-cover" />
+                    <img loading="lazy" src={selectedUser.avatar_url} alt="" className="h-12 w-12 rounded-full object-cover" />
                   ) : (
                     <User className="h-6 w-6 text-secondary-foreground" />
                   )}

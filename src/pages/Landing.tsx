@@ -24,7 +24,7 @@ export default function Landing() {
       <div className="flex items-center justify-between px-4 pt-4 sm:px-6">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 overflow-hidden rounded-lg">
-            <img src={appLogo} alt="Alikalie Study Companion" className="h-full w-full object-cover" />
+            <img loading="lazy" src={appLogo} alt="Alikalie Study Companion" className="h-full w-full object-cover" />
           </div>
           <span className="font-display text-sm font-bold text-foreground">Alikalie Study Companion</span>
         </div>

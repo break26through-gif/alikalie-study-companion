@@ -103,7 +103,7 @@ export default function Profile() {
             className="group relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-secondary"
           >
             {avatarUrl ? (
-              <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+              <img loading="lazy" src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
             ) : (
               <User className="h-6 w-6 text-secondary-foreground" />
             )}
