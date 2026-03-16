@@ -414,12 +414,24 @@ export default function ClassroomDetail() {
   // Admin: load profiles for submissions
   const loadSubmissionProfiles = async (submissions: any[]) => {
     const userIds = [...new Set(submissions.map((s: any) => s.user_id))];
-    const profiles: Record<string, string> = {};
-    for (const uid of userIds) {
-      const { data } = await supabase.from("profiles").select("full_name").eq("user_id", uid).single();
-      profiles[uid] = data?.full_name || "Unknown";
+    if (userIds.length === 0) return;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("user_id, full_name")
+      .in("user_id", userIds);
+
+    if (error) {
+      toast.error(error.message);
+      return;
     }
-    setSubmissionProfiles(profiles);
+
+    const profiles = (data || []).reduce<Record<string, string>>((acc, p: any) => {
+      acc[p.user_id] = p.full_name || "Unknown";
+      return acc;
+    }, {});
+
+    setSubmissionProfiles((prev) => ({ ...prev, ...profiles }));
   };
 
   const removeMember = async (userId: string) => {
