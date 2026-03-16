@@ -144,65 +144,129 @@ export default function ClassroomDetail() {
   const [gradeValue, setGradeValue] = useState("");
   const [feedbackValue, setFeedbackValue] = useState("");
 
-  const fetchAll = async () => {
-    if (!id || !user) return;
+  const fetchInProgressRef = useRef(false);
+  const latestFetchRef = useRef(0);
 
-    const [crRes, memsRes, notesRes, assignRes, quizRes, annoRes] = await Promise.all([
-      supabase.from("classrooms").select("*").eq("id", id).single(),
-      supabase.from("classroom_members").select("user_id, role").eq("classroom_id", id),
-      supabase.from("classroom_notes").select("*").eq("classroom_id", id).order("created_at", { ascending: false }),
-      supabase.from("assignments").select("*").eq("classroom_id", id).order("created_at", { ascending: false }),
-      supabase.from("quizzes").select("*").eq("classroom_id", id).order("created_at", { ascending: false }),
-      supabase.from("announcements").select("*").eq("classroom_id", id).order("created_at", { ascending: false }),
-    ]);
+  const fetchAll = useCallback(async () => {
+    if (!id || !user || fetchInProgressRef.current) return;
 
-    setClassroom(crRes.data);
-    if (notesRes.data) setNotes(notesRes.data);
-    if (annoRes.data) setAnnouncements(annoRes.data as Announcement[]);
+    fetchInProgressRef.current = true;
+    const fetchId = Date.now();
+    latestFetchRef.current = fetchId;
 
-    if (memsRes.data) {
-      const enriched = await Promise.all(
-        memsRes.data.map(async (m: any) => {
-          const { data: prof } = await supabase.from("profiles").select("full_name").eq("user_id", m.user_id).single();
-          return { ...m, profiles: prof };
-        })
-      );
-      setMembers(enriched);
-      setIsOwner(memsRes.data.some((m: any) => m.user_id === user.id && m.role === "owner"));
-    }
+    try {
+      const [crRes, memsRes, notesRes, assignRes, quizRes, annoRes] = await Promise.all([
+        supabase.from("classrooms").select("*").eq("id", id).single(),
+        supabase.from("classroom_members").select("user_id, role").eq("classroom_id", id),
+        supabase.from("classroom_notes").select("*").eq("classroom_id", id).order("created_at", { ascending: false }),
+        supabase.from("assignments").select("*").eq("classroom_id", id).order("created_at", { ascending: false }),
+        supabase.from("quizzes").select("*").eq("classroom_id", id).order("created_at", { ascending: false }),
+        supabase.from("announcements").select("*").eq("classroom_id", id).order("created_at", { ascending: false }),
+      ]);
 
-    if (assignRes.data) {
-      const withSubs = await Promise.all(
-        assignRes.data.map(async (a: any) => {
-          const { data: subs } = await supabase.from("assignment_submissions").select("*").eq("assignment_id", a.id);
-          return { ...a, submissions: (subs || []) as Submission[] };
-        })
-      );
-      setAssignments(withSubs);
-    }
+      if (latestFetchRef.current !== fetchId) return;
 
-    if (quizRes.data) {
-      const withQ = await Promise.all(
-        (quizRes.data as Quiz[]).map(async (q) => {
-          const { data: questions } = await supabase.from("quiz_questions").select("*").eq("quiz_id", q.id).order("sort_order");
-          return { ...q, questions: (questions || []) as QuizQuestion[] };
-        })
-      );
-      setQuizzes(withQ);
+      if (crRes.error) throw crRes.error;
+      if (memsRes.error) throw memsRes.error;
+      if (notesRes.error) throw notesRes.error;
+      if (assignRes.error) throw assignRes.error;
+      if (quizRes.error) throw quizRes.error;
+      if (annoRes.error) throw annoRes.error;
 
-      const quizIds = (quizRes.data as Quiz[]).map((q) => q.id);
-      if (quizIds.length > 0) {
-        const { data: responses } = await supabase
-          .from("quiz_responses")
-          .select("*")
-          .eq("user_id", user.id)
-          .in("quiz_id", quizIds);
-        if (responses) setMyQuizResponses(responses as QuizResponse[]);
+      const classroomData = crRes.data;
+      const membersData = memsRes.data || [];
+      const notesData = (notesRes.data || []) as Note[];
+      const announcementsData = (annoRes.data || []) as Announcement[];
+      const assignmentsData = assignRes.data || [];
+      const quizzesData = (quizRes.data || []) as Quiz[];
+
+      const memberIds = membersData.map((m: any) => m.user_id);
+      let profileMap: Record<string, string | null> = {};
+      if (memberIds.length > 0) {
+        const { data: memberProfiles, error: profilesError } = await supabase
+          .from("profiles")
+          .select("user_id, full_name")
+          .in("user_id", memberIds);
+        if (profilesError) throw profilesError;
+        profileMap = (memberProfiles || []).reduce<Record<string, string | null>>((acc, profile: any) => {
+          acc[profile.user_id] = profile.full_name;
+          return acc;
+        }, {});
       }
-    }
 
-    setLoading(false);
-  };
+      const enrichedMembers = membersData.map((m: any) => ({
+        ...m,
+        profiles: { full_name: profileMap[m.user_id] || "Unknown" },
+      }));
+
+      const assignmentIds = assignmentsData.map((a: any) => a.id);
+      let submissionsByAssignment: Record<string, Submission[]> = {};
+      if (assignmentIds.length > 0) {
+        const { data: submissionsData, error: submissionsError } = await supabase
+          .from("assignment_submissions")
+          .select("*")
+          .in("assignment_id", assignmentIds);
+        if (submissionsError) throw submissionsError;
+
+        submissionsByAssignment = (submissionsData || []).reduce<Record<string, Submission[]>>((acc, sub: any) => {
+          if (!acc[sub.assignment_id]) acc[sub.assignment_id] = [];
+          acc[sub.assignment_id].push(sub as Submission);
+          return acc;
+        }, {});
+      }
+
+      const assignmentsWithSubmissions = assignmentsData.map((assignment: any) => ({
+        ...assignment,
+        submissions: submissionsByAssignment[assignment.id] || [],
+      }));
+
+      const quizIds = quizzesData.map((q) => q.id);
+      let questionsByQuiz: Record<string, QuizQuestion[]> = {};
+      let myResponses: QuizResponse[] = [];
+
+      if (quizIds.length > 0) {
+        const [questionsRes, responsesRes] = await Promise.all([
+          supabase.from("quiz_questions").select("*").in("quiz_id", quizIds).order("sort_order"),
+          supabase.from("quiz_responses").select("*").eq("user_id", user.id).in("quiz_id", quizIds),
+        ]);
+
+        if (questionsRes.error) throw questionsRes.error;
+        if (responsesRes.error) throw responsesRes.error;
+
+        questionsByQuiz = (questionsRes.data || []).reduce<Record<string, QuizQuestion[]>>((acc, question: any) => {
+          if (!acc[question.quiz_id]) acc[question.quiz_id] = [];
+          acc[question.quiz_id].push(question as QuizQuestion);
+          return acc;
+        }, {});
+
+        myResponses = (responsesRes.data || []) as QuizResponse[];
+      }
+
+      const quizzesWithQuestions = quizzesData.map((quiz) => ({
+        ...quiz,
+        questions: questionsByQuiz[quiz.id] || [],
+      }));
+
+      setClassroom(classroomData);
+      setNotes(notesData);
+      setAnnouncements(announcementsData);
+      setMembers(enrichedMembers);
+      setAssignments(assignmentsWithSubmissions);
+      setQuizzes(quizzesWithQuestions);
+      setMyQuizResponses(myResponses);
+      setIsOwner(
+        classroomData?.created_by === user.id ||
+        membersData.some((m: any) => m.user_id === user.id && m.role === "owner")
+      );
+    } catch (err: any) {
+      toast.error(err.message || "Failed to load classroom");
+    } finally {
+      if (latestFetchRef.current === fetchId) {
+        setLoading(false);
+      }
+      fetchInProgressRef.current = false;
+    }
+  }, [id, user]);
 
   useEffect(() => { fetchAll(); }, [id, user]);
 
